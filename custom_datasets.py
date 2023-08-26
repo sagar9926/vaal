@@ -22,6 +22,14 @@ def cifar10_transformer():
                                 std=[0.5, 0.5, 0.5]),
        ])
 
+def caltech101_transformer():
+    return torchvision.transforms.Compose([
+           torchvision.transforms.ToPILImage(),
+            torchvision.transforms.Resize((224, 224)),
+           torchvision.transforms.ToTensor(),
+           torchvision.transforms.Normalize(mean = [0.485,0.456,0.406], std=[0.229,0.224,0.225]),
+])
+
 class CIFAR10(Dataset):
     def __init__(self, path):
         self.cifar10 = datasets.CIFAR10(root=path,
@@ -60,6 +68,26 @@ class CIFAR100(Dataset):
 
     def __len__(self):
         return len(self.cifar100)
+
+class CALTECH101(Dataset):
+    def __init__(self, path):
+        self.caltech101 = datasets.Caltech101(root=path,
+                                        download=True,
+                                        train=True,
+                                        transform=caltech101_transformer())
+
+    def __getitem__(self, index):
+        if isinstance(index, numpy.float64):
+            index = index.astype(numpy.int64)
+
+        data, target = self.caltech101[index]
+
+        # Your transformations here (or set it in CIFAR10)
+
+        return data, target, index
+
+    def __len__(self):
+        return len(self.caltech101)
 
 
 class ImageNet(Dataset):

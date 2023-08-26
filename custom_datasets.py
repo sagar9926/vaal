@@ -53,7 +53,7 @@ class CIFAR100(Dataset):
     def __init__(self, path):
         self.cifar100 = datasets.CIFAR100(root=path,
                                         download=True,
-                                        train=True,
+                                        # train=True,
                                         transform=cifar10_transformer())
 
     def __getitem__(self, index):

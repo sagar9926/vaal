@@ -64,16 +64,16 @@ def main(args):
     
     elif args.dataset == 'caltech101':
         test_dataloader = data.DataLoader(
-                datasets.ImageFolder(args.data_path, transform=imagenet_transformer()),
+                datasets.ImageFolder(args.data_path, transform=caltech101_transformer()),
             drop_last=False, batch_size=args.batch_size)
 
-        train_dataset = ImageNet(args.data_path)
+        train_dataset = CALTECH101(args.data_path)
 
-        args.num_val = 128120
-        args.num_images = 1281167
-        args.budget = 64060
-        args.initial_budget = 128120
-        args.num_classes = 1000
+        args.num_val = 900
+        args.num_images = 9146
+        args.budget = 225
+        args.initial_budget = 450
+        args.num_classes = 101
     else:
         raise NotImplementedError
 

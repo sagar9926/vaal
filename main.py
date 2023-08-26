@@ -37,12 +37,14 @@ def main(args):
         args.initial_budget = 5000
         args.num_classes = 10
     elif args.dataset == 'cifar100':
+
+        train_dataset = CIFAR100(args.data_path)
+        train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [0.8, 0.2])
         test_dataloader = data.DataLoader(
                 datasets.CIFAR100(args.data_path, download=True, transform=cifar_transformer(), train=False),
              batch_size=args.batch_size, drop_last=False)
 
-        train_dataset = CIFAR100(args.data_path)
-
+        
         args.num_val = 5000
         args.num_images = 50000
         args.budget = 2500
@@ -63,12 +65,12 @@ def main(args):
         args.num_classes = 1000
     
     elif args.dataset == 'caltech101':
-        test_dataloader = data.DataLoader(
-                datasets.ImageFolder(args.data_path, transform=caltech101_transformer()),
-            drop_last=False, batch_size=args.batch_size)
-
         train_dataset = CALTECH101(args.data_path)
-
+        train_dataset, test_dataset = torch.utils.data.random_split(train_dataset.caltech101, [0.9, 0.1])
+        
+        test_dataloader = data.DataLoader(test_dataset,drop_last=False, batch_size=args.batch_size, 
+        shuffle=False, num_workers=4)
+        
         args.num_val = 900
         args.num_images = 9146
         args.budget = 225
@@ -135,4 +137,3 @@ def main(args):
 if __name__ == '__main__':
     args = arguments.get_args()
     main(args)
-

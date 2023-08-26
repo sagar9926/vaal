@@ -24,8 +24,7 @@ def cifar10_transformer():
 
 def caltech101_transformer():
     return torchvision.transforms.Compose([
-           torchvision.transforms.ToPILImage(),
-            torchvision.transforms.Resize((224, 224)),
+            torchvision.transforms.Resize(224),
            torchvision.transforms.ToTensor(),
            torchvision.transforms.Normalize(mean = [0.485,0.456,0.406], std=[0.229,0.224,0.225]),
 ])
@@ -53,7 +52,7 @@ class CIFAR100(Dataset):
     def __init__(self, path):
         self.cifar100 = datasets.CIFAR100(root=path,
                                         download=True,
-                                        # train=True,
+                                        train=True,
                                         transform=cifar10_transformer())
 
     def __getitem__(self, index):
@@ -73,7 +72,6 @@ class CALTECH101(Dataset):
     def __init__(self, path):
         self.caltech101 = datasets.Caltech101(root=path,
                                         download=True,
-                                        train=True,
                                         transform=caltech101_transformer())
 
     def __getitem__(self, index):

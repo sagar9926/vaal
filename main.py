@@ -61,6 +61,19 @@ def main(args):
         args.budget = 64060
         args.initial_budget = 128120
         args.num_classes = 1000
+    
+    elif args.dataset == 'caltech101':
+        test_dataloader = data.DataLoader(
+                datasets.ImageFolder(args.data_path, transform=imagenet_transformer()),
+            drop_last=False, batch_size=args.batch_size)
+
+        train_dataset = ImageNet(args.data_path)
+
+        args.num_val = 128120
+        args.num_images = 1281167
+        args.budget = 64060
+        args.initial_budget = 128120
+        args.num_classes = 1000
     else:
         raise NotImplementedError
 

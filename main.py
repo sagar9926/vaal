@@ -113,7 +113,11 @@ def main(args):
         unlabeled_sampler = data.sampler.SubsetRandomSampler(unlabeled_indices)
         unlabeled_dataloader = data.DataLoader(train_dataset, 
                 sampler=unlabeled_sampler, batch_size=args.batch_size, drop_last=False)
-
+        
+        # labelled : querry_dataloader
+        # validate on task : val_dataloader
+        # unlabelled : unlabeled_dataloader
+        
         # train the models on the current data
         acc, vae, discriminator = solver.train(querry_dataloader,
                                                val_dataloader,

@@ -1,11 +1,14 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+
 import os
 import numpy as np
 from sklearn.metrics import accuracy_score
+
 import sampler
 import copy
+
 
 class Solver:
     def __init__(self, args, test_dataloader):
@@ -31,13 +34,14 @@ class Solver:
 
 
     def train(self, querry_dataloader, val_dataloader, task_model, vae, discriminator, unlabeled_dataloader):
-        self.args.train_iterations = ((self.args.num_images * self.args.train_epochs) // self.args.batch_size)
+        print("Running Train : ")
+        self.args.train_iterations = (self.args.num_images * self.args.train_epochs) // self.args.batch_size
         lr_change = self.args.train_iterations // 4
         labeled_data = self.read_data(querry_dataloader)
         unlabeled_data = self.read_data(unlabeled_dataloader, labels=False)
 
         optim_vae = optim.Adam(vae.parameters(), lr=5e-4)
-        optim_task_model = optim.SGD(task_model.parameters(), lr=0.01, weight_decay=5e-4, momentum=0.9)
+        optim_task_model = optim.SGD(task_model.parameters(), lr=5e-4, weight_decay=5e-4, momentum=0.9)
         optim_discriminator = optim.Adam(discriminator.parameters(), lr=5e-4)
 
 
@@ -49,7 +53,7 @@ class Solver:
             vae = vae.cuda()
             discriminator = discriminator.cuda()
             task_model = task_model.cuda()
-
+        
         best_acc = 0
         for iter_count in range(self.args.train_iterations):
             if iter_count is not 0 and iter_count % lr_change == 0:
@@ -75,21 +79,21 @@ class Solver:
                 recon, z, mu, logvar = vae(labeled_imgs)
                 unsup_loss = self.vae_loss(labeled_imgs, recon, mu, logvar, self.args.beta)
                 unlab_recon, unlab_z, unlab_mu, unlab_logvar = vae(unlabeled_imgs)
-                transductive_loss = self.vae_loss(unlabeled_imgs,
+                transductive_loss = self.vae_loss(unlabeled_imgs, 
                         unlab_recon, unlab_mu, unlab_logvar, self.args.beta)
-
+            
                 labeled_preds = discriminator(mu)
                 unlabeled_preds = discriminator(unlab_mu)
-
-                lab_real_preds = torch.ones(labeled_imgs.size(0))
-                unlab_real_preds = torch.ones(unlabeled_imgs.size(0))
-
+                
+                lab_real_preds = torch.ones(labeled_imgs.size(0), 1)
+                unlab_real_preds = torch.ones(unlabeled_imgs.size(0), 1)
+                    
                 if self.args.cuda:
                     lab_real_preds = lab_real_preds.cuda()
                     unlab_real_preds = unlab_real_preds.cuda()
 
-                dsc_loss = self.bce_loss(labeled_preds, lab_real_preds.unsqueeze(1)) + \
-                        self.bce_loss(unlabeled_preds, unlab_real_preds.unsqueeze(1))
+                dsc_loss = self.bce_loss(labeled_preds, lab_real_preds) + \
+                        self.bce_loss(unlabeled_preds, unlab_real_preds)
                 total_vae_loss = unsup_loss + transductive_loss + self.args.adversary_param * dsc_loss
                 optim_vae.zero_grad()
                 total_vae_loss.backward()
@@ -110,19 +114,19 @@ class Solver:
                 with torch.no_grad():
                     _, _, mu, _ = vae(labeled_imgs)
                     _, _, unlab_mu, _ = vae(unlabeled_imgs)
-
+                
                 labeled_preds = discriminator(mu)
                 unlabeled_preds = discriminator(unlab_mu)
-
-                lab_real_preds = torch.ones(labeled_imgs.size(0))
-                unlab_fake_preds = torch.zeros(unlabeled_imgs.size(0))
+                
+                lab_real_preds = torch.ones(labeled_imgs.size(0), 1)
+                unlab_fake_preds = torch.zeros(unlabeled_imgs.size(0), 1)
 
                 if self.args.cuda:
                     lab_real_preds = lab_real_preds.cuda()
                     unlab_fake_preds = unlab_fake_preds.cuda()
-
-                dsc_loss = self.bce_loss(labeled_preds, lab_real_preds.unsqueeze(1)) + \
-                        self.bce_loss(unlabeled_preds, unlab_fake_preds.unsqueeze(1))
+                
+                dsc_loss = self.bce_loss(labeled_preds, lab_real_preds) + \
+                        self.bce_loss(unlabeled_preds, unlab_fake_preds)
 
                 optim_discriminator.zero_grad()
                 dsc_loss.backward()
@@ -138,7 +142,7 @@ class Solver:
                         unlabeled_imgs = unlabeled_imgs.cuda()
                         labels = labels.cuda()
 
-
+                
 
             if iter_count % 100 == 0:
                 print('Current training iteration: {}'.format(iter_count))
@@ -151,7 +155,7 @@ class Solver:
                 if acc > best_acc:
                     best_acc = acc
                     best_model = copy.deepcopy(task_model)
-
+                
                 print('current step: {} acc: {}'.format(iter_count, acc))
                 print('best acc: ', best_acc)
 
@@ -164,13 +168,13 @@ class Solver:
 
 
     def sample_for_labeling(self, vae, discriminator, unlabeled_dataloader):
-        querry_indices = self.sampler.sample(vae,
-                                             discriminator,
-                                             unlabeled_dataloader,
+        querry_indices = self.sampler.sample(vae, 
+                                             discriminator, 
+                                             unlabeled_dataloader, 
                                              self.args.cuda)
 
         return querry_indices
-
+                
 
     def validate(self, task_model, loader):
         task_model.eval()

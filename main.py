@@ -39,7 +39,7 @@ def main(args):
     elif args.dataset == 'cifar100':
 
         train_dataset = CIFAR100(args.data_path)
-        train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [0.8, 0.2])
+        # train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [0.8, 0.2])
         test_dataloader = data.DataLoader(
                 datasets.CIFAR100(args.data_path, download=True, transform=cifar_transformer(), train=False),
              batch_size=args.batch_size, drop_last=False)
